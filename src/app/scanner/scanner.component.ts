@@ -13,6 +13,7 @@ export class ScannerComponent implements OnInit {
   public barcodes: SDCBarcode.Barcode[] = [];
   public outputSkus: string[] = [];
   private barcodeCapture?: SDCBarcode.BarcodeCapture = undefined;
+  private camera?: SDCCore.Camera = undefined;
 
   constructor(private modalService: NgbModal) { }
 
@@ -37,10 +38,9 @@ export class ScannerComponent implements OnInit {
 
     const context = await SDCCore.DataCaptureContext.create();
 
-    const camera = SDCCore.Camera.default;
-    await context.setFrameSource(camera);
-    camera.settings.focusGestureStrategy = SDCCore.FocusGestureStrategy.AutoOnLocation;
-
+    this.camera = SDCCore.Camera.default;
+    await context.setFrameSource(this.camera);
+    this.camera.settings.focusGestureStrategy = SDCCore.FocusGestureStrategy.AutoOnLocation;
     const settings = new SDCBarcode.BarcodeCaptureSettings();
     settings.enableSymbologies([
       SDCBarcode.Symbology.Code128,
@@ -88,7 +88,7 @@ export class ScannerComponent implements OnInit {
     );
     await barcodeCaptureOverlay.setViewfinder(viewfinder);
 
-    await camera.switchToDesiredState(SDCCore.FrameSourceState.On);
+    await this.camera.switchToDesiredState(SDCCore.FrameSourceState.On);
     await this.barcodeCapture.setEnabled(true);
   }
 
@@ -103,14 +103,15 @@ export class ScannerComponent implements OnInit {
       await this.initializeScanner();
     });
 
-    modalRef.result.then((result:any) => {
+    modalRef.result.then((result: any) => {
       this.outputSkus = this.barcodes.filter(x => x.data != null).map((barcode) => barcode.data!.toString());
       this.barcodes = [];
       this.barcodeCapture?.setEnabled(false);
+      this.camera?.switchToDesiredState(SDCCore.FrameSourceState.On);
     },
-    (reason:any) => {
-      this.barcodes = [];
-      this.barcodeCapture?.setEnabled(false);
-    });
+      (reason: any) => {
+        this.barcodes = [];
+        this.barcodeCapture?.setEnabled(false);
+      });
   }
 }
