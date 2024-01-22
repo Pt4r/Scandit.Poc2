@@ -96,6 +96,7 @@ export class ScannerComponent implements OnInit {
     const modalRef = this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'xl',
+      centered: true
     });
 
     modalRef.shown.subscribe(async () => {
