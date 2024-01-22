@@ -92,6 +92,12 @@ export class ScannerComponent implements OnInit {
     await this.barcodeCapture.setEnabled(true);
   }
 
+  disposeScanner() {
+    this.barcodes = [];
+    this.barcodeCapture?.setEnabled(false);
+    this.camera?.switchToDesiredState(SDCCore.FrameSourceState.On);
+  }
+
   open(content: any) {
     const modalRef = this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
@@ -104,14 +110,12 @@ export class ScannerComponent implements OnInit {
     });
 
     modalRef.result.then((result: any) => {
-      this.outputSkus = this.barcodes.filter(x => x.data != null).map((barcode) => barcode.data!.toString());
-      this.barcodes = [];
-      this.barcodeCapture?.setEnabled(false);
-      this.camera?.switchToDesiredState(SDCCore.FrameSourceState.On);
+      this.outputSkus = this.barcodes.filter(x => x.data != null)
+                                     .map((barcode) => barcode.data!.toString());
+      this.disposeScanner();
     },
       (reason: any) => {
-        this.barcodes = [];
-        this.barcodeCapture?.setEnabled(false);
+        this.disposeScanner();
       });
   }
 }
