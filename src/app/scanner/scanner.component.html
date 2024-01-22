@@ -1,1 +1,6 @@
-<div id="data-capture-view"></div>
+<div id="data-capture-view" (click)="resumeScan()"></div>
+
+<p>Barcodes</p>
+<ul>
+    <li *ngFor="let barcode of barcodes">{{ barcode.data }}</li>
+</ul>

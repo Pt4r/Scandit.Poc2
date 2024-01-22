@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {environment } from '../../environments/environment';
+import { environment } from '../../environments/environment';
 import * as SDCCore from 'scandit-web-datacapture-core';
 import * as SDCBarcode from 'scandit-web-datacapture-barcode';
 
@@ -9,6 +9,9 @@ import * as SDCBarcode from 'scandit-web-datacapture-barcode';
   styleUrls: ['./scanner.component.scss']
 })
 export class ScannerComponent implements OnInit {
+  public barcodes: SDCBarcode.Barcode[] = [];
+  private barcodeCapture?: SDCBarcode.BarcodeCapture = undefined;
+
   constructor() { }
 
   async ngOnInit(): Promise<void> {
@@ -20,7 +23,7 @@ export class ScannerComponent implements OnInit {
 
     await SDCCore.configure({
       licenseKey: environment.apiKey,
-      libraryLocation: new URL("./assets/library/engine/", document.baseURI).toString(),
+      libraryLocation: "https://cdn.jsdelivr.net/npm/scandit-web-datacapture-barcode@6.x/build/engine/",
       moduleLoaders: [SDCBarcode.barcodeCaptureLoader()]
     });
 
@@ -30,6 +33,7 @@ export class ScannerComponent implements OnInit {
 
     const camera = SDCCore.Camera.default;
     await context.setFrameSource(camera);
+    camera.settings.focusGestureStrategy = SDCCore.FocusGestureStrategy.AutoOnLocation;
 
     const settings = new SDCBarcode.BarcodeCaptureSettings();
     settings.enableSymbologies([
@@ -42,21 +46,23 @@ export class ScannerComponent implements OnInit {
       SDCBarcode.Symbology.EAN13UPCA,
       SDCBarcode.Symbology.QR
     ]);
+    settings.codeDuplicateFilter = -1;
 
     const symbologySetting = settings.settingsForSymbology(SDCBarcode.Symbology.Code39);
     symbologySetting.activeSymbolCounts = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
-    const barcodeCapture = await SDCBarcode.BarcodeCapture.forContext(context, settings);
-    await barcodeCapture.setEnabled(false);
+    this.barcodeCapture = await SDCBarcode.BarcodeCapture.forContext(context, settings);
+    await this.barcodeCapture.setEnabled(false);
 
-    barcodeCapture.addListener({
+    this.barcodeCapture.addListener({
       didScan: async (barcodeCapture, session) => {
         await barcodeCapture.setEnabled(false);
         const barcode = session.newlyRecognizedBarcodes[0];
         const symbology = new SDCBarcode.SymbologyDescription(barcode.symbology);
-        alert("Scanned: " + barcode.data + " " + symbology.readableName);
+        this.barcodes = session.newlyRecognizedBarcodes;
+        // alert("Scanned: " + barcode.data + " " + symbology.readableName);
         await barcodeCapture.setEnabled(true);
-      },
+      }
     });
 
 
@@ -66,7 +72,7 @@ export class ScannerComponent implements OnInit {
 
     const barcodeCaptureOverlay =
       await SDCBarcode.BarcodeCaptureOverlay.withBarcodeCaptureForViewWithStyle(
-        barcodeCapture,
+        this.barcodeCapture,
         view,
         SDCBarcode.BarcodeCaptureOverlayStyle.Frame
       );
@@ -78,6 +84,12 @@ export class ScannerComponent implements OnInit {
     await barcodeCaptureOverlay.setViewfinder(viewfinder);
 
     await camera.switchToDesiredState(SDCCore.FrameSourceState.On);
-    await barcodeCapture.setEnabled(true);
+    await this.barcodeCapture.setEnabled(true);
+  }
+
+  resumeScan() {
+    if (!this.barcodeCapture?.isEnabled()) {
+      this.barcodeCapture?.setEnabled(true);
+    }
   }
 }
