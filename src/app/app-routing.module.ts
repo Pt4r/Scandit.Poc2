@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ScannerComponent } from './scanner/scanner.component';
 
 const routes: Routes = [
-  { path: 'scanner', component: ScannerComponent }
+  { path: '', component: ScannerComponent }
  ];
 
 @NgModule({

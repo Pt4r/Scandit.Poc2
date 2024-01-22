@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment';
 import * as SDCCore from 'scandit-web-datacapture-core';
 import * as SDCBarcode from 'scandit-web-datacapture-barcode';
+import { ModalDismissReasons, NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-scanner',
@@ -10,11 +11,16 @@ import * as SDCBarcode from 'scandit-web-datacapture-barcode';
 })
 export class ScannerComponent implements OnInit {
   public barcodes: SDCBarcode.Barcode[] = [];
+  public outputSkus: string[] = [];
   private barcodeCapture?: SDCBarcode.BarcodeCapture = undefined;
 
-  constructor() { }
+  constructor(private modalService: NgbModal) { }
 
   async ngOnInit(): Promise<void> {
+
+  }
+
+  async initializeScanner() {
     const view = new SDCCore.DataCaptureView();
 
     view.connectToElement(document.getElementById("data-capture-view")!);
@@ -56,15 +62,14 @@ export class ScannerComponent implements OnInit {
 
     this.barcodeCapture.addListener({
       didScan: async (barcodeCapture, session) => {
-        await barcodeCapture.setEnabled(false);
+        // await barcodeCapture.setEnabled(false);
         const barcode = session.newlyRecognizedBarcodes[0];
         const symbology = new SDCBarcode.SymbologyDescription(barcode.symbology);
-        this.barcodes = session.newlyRecognizedBarcodes;
+        this.barcodes.push(session.newlyRecognizedBarcodes[0]);
         // alert("Scanned: " + barcode.data + " " + symbology.readableName);
-        await barcodeCapture.setEnabled(true);
+        // await barcodeCapture.setEnabled(true);
       }
     });
-
 
     view.setContext(context);
     view.connectToElement(document.getElementById("data-capture-view")!);
@@ -87,9 +92,24 @@ export class ScannerComponent implements OnInit {
     await this.barcodeCapture.setEnabled(true);
   }
 
-  resumeScan() {
-    if (!this.barcodeCapture?.isEnabled()) {
-      this.barcodeCapture?.setEnabled(true);
-    }
+  open(content: any) {
+    const modalRef = this.modalService.open(content, {
+      ariaLabelledBy: 'modal-basic-title',
+      size: 'xl',
+    });
+
+    modalRef.shown.subscribe(async () => {
+      await this.initializeScanner();
+    });
+
+    modalRef.result.then((result) => {
+      this.outputSkus = this.barcodes.filter(x => x.data != null).map((barcode) => barcode.data!.toString());
+      this.barcodes = [];
+      this.barcodeCapture?.setEnabled(false);
+    },
+    (reason) => {
+      this.barcodes = [];
+      this.barcodeCapture?.setEnabled(false);
+    });
   }
 }

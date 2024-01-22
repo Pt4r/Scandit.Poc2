@@ -1,6 +1,35 @@
-<div id="data-capture-view" (click)="resumeScan()"></div>
+<h1>Scandit WebSDK 6 Angular Sample</h1>
+<div *ngIf="outputSkus.length > 0">
+    <p>The items added to cart are:</p>
+    <ul>
+        <li *ngFor="let skus of outputSkus">{{ skus }}</li>
+    </ul>
+</div>
 
-<p>Barcodes</p>
-<ul>
-    <li *ngFor="let barcode of barcodes">{{ barcode.data }}</li>
-</ul>
+<ng-template #content
+             let-modal>
+    <div class="modal-header">
+        <button type="button"
+                class="btn-close"
+                aria-label="Close"
+                (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+        <div id="data-capture-view"></div>
+        <hr />
+        <div *ngIf="barcodes.length > 0">
+            <h3 class="text-center">Barcodes</h3>
+            <ul>
+                <li *ngFor="let barcode of barcodes">{{ barcode.data }}</li>
+            </ul>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button"
+                class="btn btn-outline-dark"
+                (click)="modal.close('Save click')">Save</button>
+    </div>
+</ng-template>
+
+<button class="btn btn-lg btn-outline-primary"
+        (click)="open(content)">Open Scanner</button>
