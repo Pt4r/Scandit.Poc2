@@ -102,12 +102,12 @@ export class ScannerComponent implements OnInit {
       await this.initializeScanner();
     });
 
-    modalRef.result.then((result) => {
+    modalRef.result.then((result:any) => {
       this.outputSkus = this.barcodes.filter(x => x.data != null).map((barcode) => barcode.data!.toString());
       this.barcodes = [];
       this.barcodeCapture?.setEnabled(false);
     },
-    (reason) => {
+    (reason:any) => {
       this.barcodes = [];
       this.barcodeCapture?.setEnabled(false);
     });
